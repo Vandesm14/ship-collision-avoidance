@@ -3,17 +3,20 @@ import p5Types from 'p5';
 import Sketch from 'react-p5';
 import React from 'react';
 import { Ship } from './types';
-import { randomShip, tickShip } from './lib';
+import { degToRad, radToDeg, randomShip, tickShip } from './lib';
 import { drawShip } from './items';
 import { HEIGHT, WIDTH } from './constants';
-import { findShipsInFOV } from './trig';
+import {
+  absoludeDegtoRelativeDeg,
+  angleBetweenPoints,
+  atan2ToBearing,
+  distanceBetweenPoints,
+} from './trig';
 
 const App = () => {
   const [ships, setShips] = React.useState<Ship[]>(
-    Array(100).fill(null).map(randomShip)
+    Array(50).fill(null).map(randomShip)
   );
-  const [displayShips, setDisplayShips] = React.useState<Ship[]>(ships);
-  const [radar, setRadar] = React.useState(0);
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(WIDTH(), HEIGHT()).parent(canvasParentRef);
@@ -24,63 +27,117 @@ const App = () => {
   };
 
   const draw = (p5: p5Types) => {
-    const radarFOV = 3;
-    const newRadar = (radar + (24 / 60 / 60) * 360) % 360;
-    setRadar(newRadar);
-
-    const newShips = ships.map(tickShip);
-
-    // the ships within visibility of the radar
-    const shipsToUpdate = findShipsInFOV(
-      newShips,
-      WIDTH() / 2,
-      HEIGHT() / 2,
-      newRadar,
-      radarFOV
-    );
-    const shipsToUpdateIds = shipsToUpdate.map((s) => s.id);
-
-    // update the display ships to be the ships within the radar's FOV
-    const newDisplayShips = displayShips.map((ship) => {
-      if (shipsToUpdateIds.includes(ship.id)) {
-        return newShips.find((s) => s.id === ship.id) || ship;
-      }
-      return ship;
-    });
-
-    setShips(newShips);
-    setDisplayShips(newDisplayShips);
+    let newShips = [...ships];
 
     p5.clear();
     p5.background(0);
 
     const diagonal = Math.sqrt(WIDTH() ** 2 + HEIGHT() ** 2);
 
-    p5.push();
-    p5.fill(0, 50, 0);
-    p5.arc(
-      WIDTH() / 2,
-      HEIGHT() / 2,
-      diagonal,
-      diagonal,
-      (newRadar - radarFOV) * (Math.PI / 180),
-      (newRadar + radarFOV) * (Math.PI / 180)
-    );
-    p5.pop();
+    // if (p5.frameCount % 5 === 0) {
+    if (p5.frameCount % 1 === 0) {
+      newShips = newShips.map((ship) => {
+        const shipsWithDistance = newShips
+          .filter((other) => other.id !== ship.id)
+          .map((relative) => ({
+            ...relative,
+            angle: radToDeg(
+              angleBetweenPoints(ship.x, ship.y, relative.x, relative.y)
+            ),
+            distance: distanceBetweenPoints(
+              ship.x,
+              ship.y,
+              relative.x,
+              relative.y
+            ),
+          }));
 
-    displayShips.forEach((ship) => {
-      const shipToUpdate = shipsToUpdate.find((s) => s.id === ship.id);
-      if (shipToUpdate) drawShip(p5, shipToUpdate);
-      else drawShip(p5, ship);
+        const closest = shipsWithDistance.reduce((acc, shipWithDistance) => {
+          if (shipWithDistance.distance < acc.distance) {
+            return shipWithDistance;
+          }
+
+          return acc;
+        }, shipsWithDistance[0]);
+
+        const closestAngle = closest.angle;
+        const angleAbsolute = atan2ToBearing(degToRad(closestAngle + 90)) % 360;
+
+        const closestBearing = absoludeDegtoRelativeDeg(
+          (angleAbsolute - ship.bearing + 180) % 360
+        );
+
+        // draw a short line from the ship in the directin of the other ships
+        p5.push();
+        p5.stroke(255, 0, 0);
+        p5.strokeWeight(1);
+        p5.translate(ship.x, ship.y);
+        p5.rotate(degToRad(angleAbsolute));
+        p5.line(0, 0, 0, 100);
+        p5.pop();
+
+        let newData = {
+          ...ship.data,
+          closest: '',
+        };
+
+        const MAX_DISTANCE = ship.speed * 60 * 5;
+        const MAX_ANGLE = ship.fov / 2;
+        newData = {
+          closest: `${Math.round(closest.distance)}nm ${Math.round(
+            closestBearing
+          )}deg ${Math.round(ship.speed * 200)}kn`,
+        };
+
+        if (
+          closest.distance < MAX_DISTANCE &&
+          Math.abs(closestBearing) < MAX_ANGLE
+        ) {
+          return {
+            ...ship,
+            bearing: closestBearing > 0 ? ship.bearing - 1 : ship.bearing + 1,
+            speed: p5.lerp(
+              ship.speed,
+              closest.distance < MAX_DISTANCE / 2 ? 0 : ship.throttle,
+              0.1
+            ),
+            data: newData,
+          };
+        }
+
+        return {
+          ...ship,
+          data: newData,
+        };
+      });
+      // debugger;
+    }
+
+    newShips = newShips.map(tickShip);
+
+    // wrap ships around the screen
+    newShips = newShips.map((ship) => {
+      const x = ship.x % WIDTH();
+      const y = ship.y % HEIGHT();
+
+      return {
+        ...ship,
+        x: x < 0 ? WIDTH() + x : x,
+        y: y < 0 ? HEIGHT() + y : y,
+      };
     });
 
-    p5.textSize(32);
-    p5.fill(255);
-    p5.text(
-      `Found ${shipsToUpdate.length} ships (angle ${Math.round(radar)})`,
-      10,
-      30
-    );
+    newShips.forEach((ship) => {
+      drawShip(p5, ship);
+
+      p5.push();
+      // add text to show the ship's state
+      p5.fill(255, 0, 0);
+      p5.text(ship.data.closest, ship.x, ship.y);
+      p5.pop();
+    });
+
+    setShips(newShips);
   };
 
   return <Sketch setup={setup} draw={draw} />;

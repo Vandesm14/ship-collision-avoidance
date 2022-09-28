@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { HEIGHT, WIDTH } from './constants';
 import { Ship } from './types';
 
 export const degToRad = (deg: number) => (deg * Math.PI) / 180;
@@ -9,15 +10,20 @@ export const randomRange = (min: number, max: number) => {
 };
 
 export const randomShip = (): Ship => {
+  const speed = randomRange(0.1, 0.4);
+  const bearing = randomRange(0, 360);
+
   return {
     id: nanoid(),
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    bearing: randomRange(90, 180),
-    speed: randomRange(0.1, 0.4),
+    x: randomRange(0, WIDTH()),
+    y: randomRange(0, HEIGHT()),
+    bearing,
+    speed,
     // TODO: these are not used yet
-    rudder: 0,
-    throttle: 0,
+    rudder: bearing,
+    throttle: speed,
+    data: {},
+    fov: 180,
   };
 };
 

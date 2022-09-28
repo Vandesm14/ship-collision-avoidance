@@ -8,6 +8,10 @@ export interface Ship {
   rudder: number;
   // target for the speed
   throttle: number;
+  // custom data for rendering
+  data: Record<string, any>;
+  // detection FOV
+  fov: number;
 }
 
 export type Vec2 = [number, number];

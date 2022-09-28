@@ -1,4 +1,4 @@
-import { degToRad, radToDeg } from './lib';
+import { radToDeg } from './lib';
 import { Ship } from './types';
 
 export const angleBetweenPoints = (
@@ -8,6 +8,23 @@ export const angleBetweenPoints = (
   y2: number
 ) => {
   return Math.atan2(y2 - y1, x2 - x1);
+};
+
+export const atan2ToBearing = (angle: number) => {
+  return radToDeg(angle + Math.PI) % 360;
+};
+
+export const absoludeDegtoRelativeDeg = (deg: number) => {
+  return deg > 180 ? deg - 360 : deg;
+};
+
+export const distanceBetweenPoints = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+) => {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 };
 
 export const findShipsInFOV = (
@@ -24,8 +41,6 @@ export const findShipsInFOV = (
       angleDiff: (radToDeg(angleDiff) + 360) % 360,
     };
   });
-
-  // return withAngle;
 
   const inFOV = withAngle.filter((ship) => {
     return (
