@@ -1,4 +1,5 @@
 export interface Ship {
+  id: string;
   x: number;
   y: number;
   bearing: number;
@@ -8,3 +9,5 @@ export interface Ship {
   // target for the speed
   throttle: number;
 }
+
+export type Vec2 = [number, number];
