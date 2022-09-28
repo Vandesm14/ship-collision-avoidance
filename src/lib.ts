@@ -23,7 +23,7 @@ export const randomShip = (): Ship => {
     rudder: bearing,
     throttle: speed,
     data: {},
-    fov: 180,
+    fov: 120,
   };
 };
 
