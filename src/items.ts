@@ -30,19 +30,19 @@ const drawFOVArc = (
   p5.noFill();
   p5.stroke(255, 0, 0);
   p5.strokeWeight(2);
-  p5.arc(0, 0, range * 2, range * 2, degToRad(-fov / 2), degToRad(fov / 2));
-  p5.line(
-    0,
-    0,
-    range * Math.cos(degToRad(-fov / 2)),
-    range * Math.sin(degToRad(-fov / 2))
-  );
-  p5.line(
-    0,
-    0,
-    range * Math.cos(degToRad(fov / 2)),
-    range * Math.sin(degToRad(fov / 2))
-  );
+  // p5.arc(0, 0, range * 2, range * 2, degToRad(-fov / 2), degToRad(fov / 2));
+  // p5.line(
+  //   0,
+  //   0,
+  //   range * Math.cos(degToRad(-fov / 2)),
+  //   range * Math.sin(degToRad(-fov / 2))
+  // );
+  // p5.line(
+  //   0,
+  //   0,
+  //   range * Math.cos(degToRad(fov / 2)),
+  //   range * Math.sin(degToRad(fov / 2))
+  // );
   p5.stroke(255);
   p5.line(0, 0, range, 0);
   p5.pop();
@@ -53,7 +53,7 @@ export const drawShip = (p5: p5Types, ship: Ship) => {
 
   const FOV = 90;
 
-  const radius = speed * 50;
+  const radius = speed * 60 * 5;
 
   drawFOVArc(p5, x, y, bearing, FOV, radius);
   drawTriangle(p5, x, y, 10, bearing);

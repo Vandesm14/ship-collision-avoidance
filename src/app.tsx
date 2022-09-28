@@ -9,7 +9,7 @@ import { HEIGHT, WIDTH } from './constants';
 
 const App = () => {
   const [ships, setShips] = React.useState<Ship[]>(
-    Array(100).fill(null).map(randomShip)
+    Array(10).fill(null).map(randomShip)
   );
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
@@ -23,6 +23,7 @@ const App = () => {
   const draw = (p5: p5Types) => {
     setShips((ships) => ships.map((ship) => tickShip(ship)));
 
+    p5.clear();
     p5.background(0);
     ships.forEach((ship) => drawShip(p5, ship));
   };

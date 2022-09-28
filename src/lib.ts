@@ -11,7 +11,7 @@ export const randomShip = (): Ship => {
     x: Math.random() * 100,
     y: Math.random() * 100,
     bearing: randomRange(90, 180),
-    speed: randomRange(0.1, 2),
+    speed: randomRange(0.1, 0.3),
     // TODO: these are not used yet
     rudder: 0,
     throttle: 0,
