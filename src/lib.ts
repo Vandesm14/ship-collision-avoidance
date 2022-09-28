@@ -12,22 +12,27 @@ export const randomShip = (): Ship => {
     y: Math.random() * 100,
     bearing: randomRange(90, 180),
     speed: randomRange(0.1, 2),
+    // TODO: these are not used yet
+    rudder: 0,
+    throttle: 0,
   };
 };
-// override this for testing
-// export const randomShip = (): Ship => {
-//   return {
-//     x: 50,
-//     y: 50,
-//     bearing: 135,
-//     speed: 1,
-//   };
-// };
+
+export const getAngleFromBearing = (bearing: number) => {
+  return bearing - 90;
+};
 
 export const tickShip = (ship: Ship) => {
+  const { x, y, bearing, speed } = ship;
+
+  const angle = getAngleFromBearing(bearing);
+
+  const dx = Math.cos(degToRad(angle)) * speed;
+  const dy = Math.sin(degToRad(angle)) * speed;
+
   return {
     ...ship,
-    x: ship.x + Math.cos(degToRad(ship.bearing - 90)) * ship.speed,
-    y: ship.y + Math.sin(degToRad(ship.bearing - 90)) * ship.speed,
+    x: x + dx,
+    y: y + dy,
   };
 };

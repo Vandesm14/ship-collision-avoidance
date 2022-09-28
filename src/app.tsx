@@ -4,17 +4,20 @@ import Sketch from 'react-p5';
 import React from 'react';
 import { Ship } from './types';
 import { randomShip, tickShip } from './lib';
-import { drawShip } from './sketch';
+import { drawShip } from './items';
+import { HEIGHT, WIDTH } from './constants';
 
 const App = () => {
   const [ships, setShips] = React.useState<Ship[]>(
-    Array(10).fill(null).map(randomShip)
+    Array(100).fill(null).map(randomShip)
   );
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
-    p5.createCanvas(window.innerWidth, window.innerHeight).parent(
-      canvasParentRef
-    );
+    p5.createCanvas(WIDTH(), HEIGHT()).parent(canvasParentRef);
+
+    document.onresize = () => {
+      p5.resizeCanvas(WIDTH(), HEIGHT());
+    };
   };
 
   const draw = (p5: p5Types) => {
