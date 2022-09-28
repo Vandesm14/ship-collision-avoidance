@@ -53,30 +53,26 @@ const App = () => {
 
     p5.clear();
     p5.background(0);
+
+    const diagonal = Math.sqrt(WIDTH() ** 2 + HEIGHT() ** 2);
+
+    p5.push();
+    p5.fill(0, 50, 0);
+    p5.arc(
+      WIDTH() / 2,
+      HEIGHT() / 2,
+      diagonal,
+      diagonal,
+      (newRadar - radarFOV) * (Math.PI / 180),
+      (newRadar + radarFOV) * (Math.PI / 180)
+    );
+    p5.pop();
+
     displayShips.forEach((ship) => {
       const shipToUpdate = shipsToUpdate.find((s) => s.id === ship.id);
-      if (shipToUpdate) {
-        p5.stroke(255, 0, 0);
-        drawShip(p5, shipToUpdate);
-      } else {
-        p5.noStroke();
-        drawShip(p5, ship);
-      }
+      if (shipToUpdate) drawShip(p5, shipToUpdate);
+      else drawShip(p5, ship);
     });
-
-    p5.stroke(0, 255, 0);
-    p5.line(
-      WIDTH() / 2,
-      HEIGHT() / 2,
-      WIDTH() / 2 + Math.cos((newRadar - radarFOV) * (Math.PI / 180)) * WIDTH(),
-      HEIGHT() / 2 + Math.sin((newRadar - radarFOV) * (Math.PI / 180)) * WIDTH()
-    );
-    p5.line(
-      WIDTH() / 2,
-      HEIGHT() / 2,
-      WIDTH() / 2 + Math.cos((newRadar + radarFOV) * (Math.PI / 180)) * WIDTH(),
-      HEIGHT() / 2 + Math.sin((newRadar + radarFOV) * (Math.PI / 180)) * WIDTH()
-    );
 
     p5.textSize(32);
     p5.fill(255);
