@@ -56,3 +56,18 @@ export const drawShip = (p5: p5Types, ship: Ship) => {
   drawFOVArc(p5, x, y, bearing, ship.fov, radius);
   drawTriangle(p5, x, y, 10, bearing);
 };
+
+export const drawLine = (
+  p5: p5Types,
+  x: number,
+  y: number,
+  bearing: number,
+  length: number
+) => {
+  // bearing 0 is up
+  const angle = bearing - 90;
+  const dx = Math.cos(degToRad(angle)) * length;
+  const dy = Math.sin(degToRad(angle)) * length;
+
+  p5.line(x, y, x + dx, y + dy);
+};

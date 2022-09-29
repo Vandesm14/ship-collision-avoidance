@@ -4,19 +4,22 @@ import Sketch from 'react-p5';
 import React from 'react';
 import { Ship } from './types';
 import { degToRad, radToDeg, randomShip, tickShip } from './lib';
-import { drawShip } from './items';
+import { drawLine, drawShip } from './items';
 import { HEIGHT, WIDTH } from './constants';
 import {
   absoludeDegtoRelativeDeg,
   angleBetweenPoints,
   atan2ToBearing,
   distanceBetweenPoints,
+  intersectionOfTwoLines,
 } from './trig';
 
 const App = () => {
   const [ships, setShips] = React.useState<Ship[]>(
     Array(50).fill(null).map(randomShip)
   );
+
+  const diagonal = Math.sqrt(WIDTH() ** 2 + HEIGHT() ** 2);
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(WIDTH(), HEIGHT()).parent(canvasParentRef);
@@ -31,8 +34,6 @@ const App = () => {
 
     p5.clear();
     p5.background(0);
-
-    const diagonal = Math.sqrt(WIDTH() ** 2 + HEIGHT() ** 2);
 
     // if (p5.frameCount % 5 === 0) {
     if (p5.frameCount % 1 === 0) {
@@ -83,19 +84,89 @@ const App = () => {
 
         const MAX_DISTANCE = ship.speed * 60 * 5;
         const MAX_ANGLE = ship.fov / 2;
-        newData = {
-          closest: `${Math.round(closest.distance)}nm ${Math.round(
-            closestBearing
-          )}deg ${Math.round(ship.speed * 200)}kn`,
+
+        const possibleCollision =
+          closest.distance < MAX_DISTANCE &&
+          Math.abs(closestBearing) < MAX_ANGLE;
+
+        const closestSlopeIntersection = intersectionOfTwoLines(
+          ship.x,
+          ship.y,
+          ship.bearing,
+          closest.x,
+          closest.y,
+          closest.bearing
+        );
+        const timeToCollision = {
+          me:
+            distanceBetweenPoints(
+              ship.x,
+              ship.y,
+              closestSlopeIntersection.x,
+              closestSlopeIntersection.y
+            ) /
+            ship.speed /
+            60,
+          them:
+            distanceBetweenPoints(
+              closest.x,
+              closest.y,
+              closestSlopeIntersection.x,
+              closestSlopeIntersection.y
+            ) /
+            closest.speed /
+            60,
         };
 
-        if (
-          closest.distance < MAX_DISTANCE &&
-          Math.abs(closestBearing) < MAX_ANGLE
-        ) {
+        // debug lines to check slope
+        {
+          let color = `#${ship.bearing
+            .toString(16)
+            .padStart(6, '0')
+            .replace('.', '')}`.slice(0, 7);
+
+          p5.push();
+          p5.stroke(color);
+          p5.strokeWeight(1);
+          drawLine(p5, ship.x, ship.y, ship.bearing, 100);
+          drawLine(p5, closest.x, closest.y, closest.bearing, 100);
+          p5.pop();
+        }
+
+        const newBearing =
+          closestBearing > 0 ? ship.bearing - 1 : ship.bearing + 1;
+
+        // debug points to check slope intersections
+        if (closestSlopeIntersection) {
+          p5.push();
+          p5.stroke(0, 255, 0);
+          p5.strokeWeight(10);
+          p5.point(closestSlopeIntersection.x, closestSlopeIntersection.y);
+          p5.pop();
+
+          p5.push();
+          p5.fill(255);
+          p5.text(
+            `${Math.round(timeToCollision.me)}s`,
+            closestSlopeIntersection.x + 10,
+            closestSlopeIntersection.y + 10
+          );
+          p5.pop();
+        }
+        newData = {
+          // closest: `${Math.round(closest.distance)}nm ${Math.round(
+          //   closestBearing
+          // )}deg ${Math.round(ship.speed * 200)}kn`,
+          // display this ships bearing and x,y (rounded)
+          closest: `${Math.round(ship.bearing)}deg ${Math.round(
+            ship.x
+          )}, ${Math.round(ship.y)}`,
+        };
+
+        if (possibleCollision) {
           return {
             ...ship,
-            bearing: closestBearing > 0 ? ship.bearing - 1 : ship.bearing + 1,
+            bearing: newBearing,
             speed: p5.lerp(
               ship.speed,
               closest.distance < MAX_DISTANCE / 2 ? 0 : ship.throttle,
